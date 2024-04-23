@@ -41,6 +41,7 @@ public class Client
         this.Session = Data.Session;
     }
 
+    // test.
     public Data ValidateUser(string HardwareId) => QueryAsync<Data>($"https://tsar.cc/api/client/subscriptions/get?app={this.AppId}&hwid={HardwareId}", this.ClientKey, HardwareId).Result;
 
     private async Task<T> QueryAsync<T>(string Path, string ClientKey, string HardwareId)
