@@ -7,40 +7,6 @@ using System.Threading.Tasks;
 
 namespace Tsar;
 
-public enum InitError
-{
-    FailedToGetHWID,
-    ValidateError
-}
-
-public enum AuthError
-{
-    FailedToOpenBrowser,
-    Unauthorized,
-    ValidateError
-}
-
-public enum ValidateError
-{
-    RequestFailed,
-    AppNotFound,
-    UserNotFound,
-    ServerError,
-    FailedToParseBody,
-    FailedToGetData,
-    FailedToGetSignature,
-    FailedToDecodeData,
-    FailedToDecodeSignature,
-    FailedToDecodePubKey,
-    FailedToParseData,
-    FailedToGetTimestamp,
-    FailedToParseTimestamp,
-    FailedToBuildKey,
-    FailedToBuildSignature,
-    OldResponse,
-    InvalidSignature
-}
-
 public class Data
 {
     [JsonPropertyName("subscription")]
@@ -50,7 +16,7 @@ public class Data
     public double Timestamp { get; set; }
 
     [JsonPropertyName("hwid")]
-    public string Hwid { get; set; }
+    public string HardwareId { get; set; }
 
     [JsonPropertyName("session")]
     public string Session { get; set; }
@@ -80,9 +46,36 @@ public class User
     public object Avatar { get; set; }
 }
 
-public class ClientOptions
+public enum InitError
 {
-    public string AppId { get; set; }
-    public string ClientKey { get; set; }
-    public bool DebugPrint { get; set; }
+    FailedToGetHardwareId,
+    ValidateError,
+}
+
+public enum AuthError
+{
+    FailedToOpenBrowser,
+    Unauthorized,
+    ValidateError,
+}
+
+public enum ValidateError
+{
+    RequestFailed,
+    AppNotFound,
+    UserNotFound,
+    ServerError,
+    FailedToParseBody,
+    FailedToGetData,
+    FailedToGetSignature,
+    FailedToDecodeData,
+    FailedToDecodeSignature,
+    FailedToDecodePubKey,
+    FailedToParseData,
+    FailedToGetTimestamp,
+    FailedToParseTimestamp,
+    FailedToBuildKey,
+    FailedToBuildSignature,
+    OldResponse,
+    InvalidSignature,
 }

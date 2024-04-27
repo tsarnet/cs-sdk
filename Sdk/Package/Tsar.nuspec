@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+
+    <id>Tsar.Net</id>
+
+    <version>0.0.2-beta</version>
+
+    <title>Tsar.Net</title>
+
+    <authors>ImmuneLion318</authors>
+    <owners>ImmuneLion318</owners>
+
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+
+    <icon>Logo.png</icon>
+    <readme>ReadMe.md</readme>
+
+    <projectUrl>https://github.com/tsar-sec/cs-sdk/</projectUrl>
+
+    <description>Tsar.Net C# Developer Kit For Remote Interaction With https://tsar.cc Web Server.</description>
+    <summary>Tsar.Net C# Developer Kit For Remote Interaction With https://tsar.cc Web Server.</summary>
+    <releaseNotes>Initial Release.</releaseNotes>
+
+    <copyright>Copyright   2024</copyright>
+    <language>en-US</language>
+    <tags>C# .Net Web Authentication</tags>
+
+    <dependencies>
+      <group targetFramework=".NETFramework4.8" />
+    </dependencies>
+
+  </metadata>
+
+  <files>
+
+    <file src="..\bin\Release\Tsar.Net.dll" target="lib\net48\Tsar.Net.dll" />
+    <file src="..\bin\Release\Tsar.Net.xml" target="lib\net48\Tsar.Net.xml" />
+
+    <file src="Logo.png" target="Logo.png" />
+    <file src="ReadMe.md" target="ReadMe.md" />
+
+  </files>
+
+</package>
