@@ -11,7 +11,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 using GuerrillaNtp;
-
+using Microsoft.Win32;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Engines;
@@ -49,7 +49,7 @@ public class Client : IDisposable
     {
         this.ApplicationId = Options.ApplicationId;
         this.ClientKey = Options.ClientKey;
-        this.HardwareId = Hardware.HardwareId;
+        this.HardwareId = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography", "MachineGuid", null);
 
         if (Options.DebugPrint)
             Console.WriteLine($"Client Object Created Successfully : {this.ApplicationId} : {this.ClientKey} : {this.Session} : {this.HardwareId}");
@@ -128,33 +128,4 @@ public class ClientOptions
     public string ApplicationId { get; set; }
     public string ClientKey { get; set; }
     public bool DebugPrint { get; set; }
-}
-
-public class Hardware
-{
-    public static string HardwareId
-    {
-        get
-        {
-            string ProcessorId = GetProperty("win32_processor", "processorID");
-            string BiosSerial = GetProperty("win32_bios", "SerialNumber");
-            string DeviceId = GetProperty("win32_processor", "DeviceID");
-            string MemoryCapacity = GetProperty("Win32_PhysicalMemory", "Capacity");
-            string Motherboard = GetProperty("Win32_ComputerSystemProduct", "UUID");
-
-            return ProcessorId + BiosSerial + DeviceId + MemoryCapacity + Motherboard;
-        }
-    }
-
-    public static string GetProperty(string Path, string Property)
-    {
-        using (ManagementClass Management = new ManagementClass(Path))
-        {
-            using (ManagementObjectCollection ObjectCollection = Management.GetInstances())
-                foreach (ManagementBaseObject Object in ObjectCollection)
-                    return Object.Properties[Property].Value.ToString();
-        }
-
-        return null;
-    }
 }
