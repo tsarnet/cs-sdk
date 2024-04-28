@@ -1,27 +1,27 @@
-# 📦Tsar.Net - Development Kit Documentation
+# 📦Tsar.Net - Development kit documentation
 
 ## Introduction
 
-Tsar.Net Is A Development Kit For Building Applications That Interact With The Tsar Network For Application Management, Authentication And More.
+Tsar.Net is a development kit for building applications that interact with the Tsar Network for application management, authentication and more.
 
-## Getting Started
+## Getting started
 
-To Get Started With Tsar.Net, You Will Need To Install Tsar.Net NuGet Package. You Can Do This By Running The Following Command In The NuGet Package Manager Console Or Visit The Nuget Page:
+To get started with Tsar.Net, you will need to install Tsar.Net NuGet package. You can do this by running the following command in the NuGet package manager console or visit the Nuget page:
 
 ```
 Install-Package Tsar.Net
 ```
 
-Alternatively, You Can Install The Package Using The .NET CLI:
+Alternatively, you can install the package using the .NET CLI:
 
 ```
 dotnet add package Tsar.Net
 ```
 
-Once You Have Installed The Package, You Can Start Using The Tsar.Net SDK In Your Application.
-If You Have Any Questions Or Need Help, Please Reference The Demo Application Or Contact Us.
+Once you have installed the package, you can start using the Tsar.Net SDK in your application.
+If you have any questions or need help, please reference the demo application or contact us.
 
-## Documentation - Table Of Contents
+## Documentation - Table of contents
 
 - [Client](#Client)
   - [Constructor](#Constructor)
@@ -36,8 +36,7 @@ public Client(ClientOptions Options)
 
 ## Parameters
 
-- `Options` - The Options To Use When Creating The Client.
-
+- `Options` - The options to use when creating the client.
 
 # Properties
 
@@ -62,7 +61,7 @@ public Data ValidateUser(string Id)
 
 ## Parameters
 
-- `Id` - The Id Of The User To Validate.
+- `Id` - The id of the user to validate.
 
 ```csharp
 public Async Task<Data> ValidateUserAsync(string Id)
@@ -70,4 +69,4 @@ public Async Task<Data> ValidateUserAsync(string Id)
 
 ## Parameters
 
-- `Id` - The Id Of The User To Get.
+- `Id` - The id of the user to get.
