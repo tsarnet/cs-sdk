@@ -106,10 +106,17 @@ public class Client : IDisposable
     }
     #endregion
 
+    #region Events
+    /// <summary> Occurs When The <see cref="Client"/> Instance Is Disposed. </summary>
+    public event EventHandler OnDispose;
+    #endregion
+
     #region Dispose
     /// <summary> Disposes Of The <see cref="Client"/> Object. </summary>
     public void Dispose()
     {
+        OnDispose?.Invoke(this, EventArgs.Empty);
+
         if (HttpClient != null)
             HttpClient.Dispose();
     }
