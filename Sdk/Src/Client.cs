@@ -1,24 +1,20 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Management;
 using System.Net;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 using GuerrillaNtp;
-using Microsoft.Win32;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Digests;
-using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Signers;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Asn1.Ocsp;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Tsar;
 
@@ -37,7 +33,19 @@ public class Client : IDisposable
     public string Session { get; }
 
     /// <summary> The User's Hardware Id. </summary>
-    public string HardwareId { get; }
+    public string HardwareId
+    {
+        get
+        {
+            ManagementObjectSearcher Searcher = new ManagementObjectSearcher("SELECT * FROM Win32_ComputerSystemProduct");
+            ManagementObjectCollection Collection = Searcher.Get();
+
+            foreach (ManagementObject ManagementObject in Collection)
+                return ManagementObject["UUID"].ToString();
+
+            return null;
+        }
+    }
 
     /// <summary> The User's Subscription. </summary>
     public Subscription Subscription { get; }
@@ -49,10 +57,6 @@ public class Client : IDisposable
     {
         this.ApplicationId = Options.ApplicationId;
         this.ClientKey = Options.ClientKey;
-        this.HardwareId = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography", "MachineGuid", null);
-
-        if (Options.DebugPrint)
-            Console.WriteLine($"Client Object Created Successfully : {this.ApplicationId} : {this.ClientKey} : {this.Session} : {this.HardwareId}");
 
         Data UserData = this.ValidateUser(this.HardwareId);
 
@@ -62,6 +66,9 @@ public class Client : IDisposable
             this.Subscription = UserData.Subscription;
         }
         else Process.Start($"https://tsar.cc/auth/{this.ApplicationId}/{this.HardwareId}").WaitForExit();
+
+        if (Options.DebugPrint)
+            Console.WriteLine($"Client Object Created Successfully : {this.ApplicationId} : {this.ClientKey} : {this.Session} : {this.HardwareId}");
     }
     #endregion
 
@@ -101,6 +108,30 @@ public class Client : IDisposable
 
         byte[] PublicKeyBytes = Convert.FromBase64String(this.ClientKey);
         byte[] SignatureBytes = Convert.FromBase64String(JsonSerializer.Deserialize<JsonElement>(JsonText).GetProperty("signature").ToString());
+
+        Asn1Object Object = Asn1Object.FromByteArray(PublicKeyBytes);
+        byte[] EncodedPublicKey = Object.GetEncoded();
+
+        SubjectPublicKeyInfo PublicKeyInfo = SubjectPublicKeyInfo.GetInstance(EncodedPublicKey);
+        ECPublicKeyParameters ecPublicKeyParameters = (ECPublicKeyParameters)PublicKeyFactory.CreateKey(PublicKeyInfo);
+
+        using (ECDsa Ecdsa = ECDsa.Create())
+        {
+            ECParameters ecParams = new ECParameters
+            {
+                Curve = ECCurve.NamedCurves.nistP256,
+                Q = new ECPoint
+                {
+                    X = ecPublicKeyParameters.Q.AffineXCoord.GetEncoded(),
+                    Y = ecPublicKeyParameters.Q.AffineYCoord.GetEncoded()
+                }
+            };
+
+            Ecdsa.ImportParameters(ecParams);
+
+            if (!Ecdsa.VerifyData(DataBytes, SignatureBytes, HashAlgorithmName.SHA256))
+                throw new Exception("Signature Invalid.");
+        }
 
         return JsonSerializer.Deserialize<T>(DataBytes);
     }
