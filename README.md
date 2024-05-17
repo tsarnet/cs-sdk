@@ -1,8 +1,8 @@
-# 📦Tsar.Net - Development kit documentation
+# Tsar.Net - TSAR C# SDK
 
-## Introduction
+The official C# SDK for TSAR.
 
-Tsar.Net is a development kit for building applications that interact with the Tsar Network for application management, authentication and more.
+![banner](/banner.png)
 
 ## Getting started
 
@@ -19,54 +19,7 @@ dotnet add package Tsar.Net
 ```
 
 Once you have installed the package, you can start using the Tsar.Net SDK in your application.
-If you have any questions or need help, please reference the demo application or contact us.
 
-## Documentation - Table of contents
+## Need help?
 
-- [Client](#Client)
-  - [Constructor](#Constructor)
-  - [Properties](#Properties)
-  - [Methods](#Methods)
-
-# Constructor
-
-```csharp
-public Client(ClientOptions Options)
-```
-
-## Parameters
-
-- `Options` - The options to use when creating the client.
-
-# Properties
-
-```csharp
-
-public string ApplicationId { get; set; }
-
-public string ClientKey { get; set; }
-
-public string Session { get; set; }
-
-public string HardwareId { get; set; }
-
-public Subscription Subscription { get; }
-```
-
-# Methods
-
-```csharp
-public Data ValidateUser(string Id)
-```
-
-## Parameters
-
-- `Id` - The id of the user to validate.
-
-```csharp
-public Async Task<Data> ValidateUserAsync(string Id)
-```
-
-## Parameters
-
-- `Id` - The id of the user to get.
+Join our [discord community](https://discord.com/invite/JReXjQCVPw) if you have any questions. For other contact options, please [visit here](https://tsar.cc/about/social).
