@@ -103,7 +103,7 @@ public class Client : IDisposable
         NtpClient NtpClient = new NtpClient("time.cloudflare.com");
         long UnixTime = (NtpClient.Query().UtcNow).ToUnixTimeSeconds();
 
-        if (DataObject.Timestamp < SystemTime - 5 || Math.Abs(UnixTime - SystemTime) > 1)
+        if (DataObject.Timestamp < SystemTime - 30 || Math.Abs(UnixTime - SystemTime) > 30)
             throw new Exception("Timestamp Invalid.");
 
         byte[] PublicKeyBytes = Convert.FromBase64String(this.ClientKey);
