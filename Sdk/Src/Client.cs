@@ -53,6 +53,7 @@ public class Client : IDisposable
 
     #region Constructors
     /// <summary> Initializes A New Instance Of The <see cref="Client"/> Class. </summary>
+    /// <param name="Options"> The Client Options To Use When Constructing <see cref="Client"/>. </param>
     public Client(ClientOptions Options)
     {
         this.ApplicationId = Options.ApplicationId;
@@ -65,7 +66,11 @@ public class Client : IDisposable
             this.Session = UserData.Session;
             this.Subscription = UserData.Subscription;
         }
-        else Process.Start($"https://tsar.cc/auth/{this.ApplicationId}/{this.HardwareId}").WaitForExit();
+        else
+        {
+            Process.Start($"https://tsar.cc/auth/{this.ApplicationId}/{this.HardwareId}").WaitForExit();
+            Environment.Exit(0);
+        }
 
         if (Options.DebugPrint)
             Console.WriteLine($"Client Object Created Successfully : {this.ApplicationId} : {this.ClientKey} : {this.Session} : {this.HardwareId}");
@@ -152,13 +157,6 @@ public class Client : IDisposable
             HttpClient.Dispose();
     }
     #endregion
-}
-
-public class ClientException : Exception
-{
-    public ClientException(InitError Error, string Message) : base(Message) { }
-    public ClientException(AuthError Error, string Message) : base(Message) { }
-    public ClientException(ValidateError Error, string Message) : base(Message) { }
 }
 
 public class ClientOptions

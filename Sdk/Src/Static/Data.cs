@@ -46,25 +46,18 @@ public class User
     public object Avatar { get; set; }
 }
 
-public enum InitError
+public enum Status
 {
-    FailedToGetHardwareId,
-    ValidateError,
-}
+    Success,
 
-public enum AuthError
-{
-    FailedToOpenBrowser,
+    ApplicationNotFound,
+    UserNotFound,
+
+    RequestFailed,
+    ServerError,
     Unauthorized,
     ValidateError,
-}
 
-public enum ValidateError
-{
-    RequestFailed,
-    AppNotFound,
-    UserNotFound,
-    ServerError,
     FailedToParseBody,
     FailedToGetData,
     FailedToGetSignature,
@@ -76,6 +69,11 @@ public enum ValidateError
     FailedToParseTimestamp,
     FailedToBuildKey,
     FailedToBuildSignature,
+
     OldResponse,
+
     InvalidSignature,
+
+    FailedToOpenBrowser,
+    FailedToGetHardwareId,
 }
