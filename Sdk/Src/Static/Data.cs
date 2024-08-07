@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace Tsar;
 
@@ -44,6 +39,18 @@ public class User
 
     [JsonPropertyName("avatar")]
     public object Avatar { get; set; }
+}
+
+public class ValidateData
+{
+    [JsonPropertyName("valid")]
+    public bool Valid { get; set; }
+
+    [JsonPropertyName("hwid")]
+    public string HardwareId { get; set; }
+
+    [JsonPropertyName("timestamp")]
+    public double Timestamp { get; set; }
 }
 
 public enum Status

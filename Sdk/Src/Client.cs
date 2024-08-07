@@ -3,18 +3,15 @@ using System.Diagnostics;
 using System.Management;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
-
 using GuerrillaNtp;
-using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.Asn1.Ocsp;
-using System.Security.Cryptography.X509Certificates;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
 
 namespace Tsar;
 
@@ -73,20 +70,24 @@ public class Client : IDisposable
         }
 
         if (Options.DebugPrint)
-            Console.WriteLine($"Client Object Created Successfully : {this.ApplicationId} : {this.ClientKey} : {this.Session} : {this.HardwareId}");
+            Console.WriteLine($"Client Object Created Successfully :\nApplication Id - {this.ApplicationId}\nClient Key - {this.ClientKey}\nSession - {this.Session}\nHardware Id - {this.HardwareId}\n");
     }
     #endregion
 
     #region Methods
-    /// <summary> Validates The User With <paramref name="Id"/> Specified. </summary>
-    /// <param name="Id"> The User's Hardware Id. </param>
-    /// <returns> <see cref="Data"/> Struct Which Contains Information About The User And Subscription. </returns>
-    public Data ValidateUser(string Id) => Query<Data>($"https://tsar.cc/api/client/subscriptions/get?app={this.ApplicationId}&hwid={Id}").Result;
+    /// <summary> Validates The User. </summary>
+    /// <returns> <see cref="ValidateData"/> Struct Which Contains Information About The Current User Status. </returns>
+    public ValidateData Validate() => this.Query<ValidateData>($"https://tsar.cc/api/client/validate?app={this.ApplicationId}&hwid={this.HardwareId}&session={this.Session}").Result;
 
     /// <summary> Validates The User With <paramref name="Id"/> Specified. </summary>
     /// <param name="Id"> The User's Hardware Id. </param>
     /// <returns> <see cref="Data"/> Struct Which Contains Information About The User And Subscription. </returns>
-    public async Task<Data> ValidateUserAsync(string Id) => await Query<Data>($"https://tsar.cc/api/client/subscriptions/get?app={this.ApplicationId}&hwid={Id}");
+    internal Data ValidateUser(string Id) => this.Query<Data>($"https://tsar.cc/api/client/subscriptions/get?app={this.ApplicationId}&hwid={Id}").Result;
+
+    /// <summary> Validates The User With <paramref name="Id"/> Specified. </summary>
+    /// <param name="Id"> The User's Hardware Id. </param>
+    /// <returns> <see cref="Data"/> Struct Which Contains Information About The User And Subscription. </returns>
+    internal async Task<Data> ValidateUserAsync(string Id) => await this.Query<Data>($"https://tsar.cc/api/client/subscriptions/get?app={this.ApplicationId}&hwid={Id}");
 
     private async Task<T> Query<T>(string Path)
     {
@@ -100,13 +101,13 @@ public class Client : IDisposable
         byte[] DataBytes = Convert.FromBase64String(JsonSerializer.Deserialize<JsonElement>(JsonText).GetProperty("data").ToString());
         Data DataObject = JsonSerializer.Deserialize<Data>(Encoding.UTF8.GetString(DataBytes));
 
-        if (DataObject.HardwareId != HardwareId)
+        if (DataObject.HardwareId != this.HardwareId)
             throw new Exception("Hardware Id Mismatch.");
 
         long SystemTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         NtpClient NtpClient = new NtpClient("time.cloudflare.com");
-        long UnixTime = (NtpClient.Query().UtcNow).ToUnixTimeSeconds();
+        long UnixTime = NtpClient.Query().UtcNow.ToUnixTimeSeconds();
 
         if (DataObject.Timestamp < SystemTime - 30 || Math.Abs(UnixTime - SystemTime) > 30)
             throw new Exception("Timestamp Invalid.");

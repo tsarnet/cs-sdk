@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 using Tsar;
 
@@ -13,8 +9,8 @@ internal class Program
 {
     public static Client TsarClient = new Client(new ClientOptions
     {
-        ApplicationId = "5cce113e-b84f-43d3-a9c8-119579a4df0f",
-        ClientKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEnecUBQwWprvrTapicgGus20/LBPxIF5zKMvciHuniPg/T4/jBeyum36bNVvjFVtGKgQKbHChB8wsSWpVLghwag==",
+        ApplicationId = "e27cd770-cbb3-425a-b631-8841dbdf1912",
+        ClientKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgavgGalH2ip63mElZtLXpR8QypSVNLSxLzV52kZjXyhHo7Swto2wPZbcChYRbUFB72XNG3zzJDHcm/rjakxXmw==",
         DebugPrint = true
     });
 
@@ -29,6 +25,13 @@ internal class Program
         Console.WriteLine($"  User Id: {TsarClient.Subscription.User.Id}");
         Console.WriteLine($"  Username: {TsarClient.Subscription.User.Username}");
         Console.WriteLine($"  Avatar: {TsarClient.Subscription.User.Avatar}");
+
+        Console.WriteLine("\n  -- Validate Information --\n");
+
+        ValidateData ValidateData = TsarClient.Validate();
+        Console.WriteLine($"  Is Valid: {ValidateData.Valid}");
+        Console.WriteLine($"  Hardware Id: {ValidateData.HardwareId}");
+        Console.WriteLine($"  TimeStamp: {ValidateData.Timestamp}");
 
         Thread.Sleep(-1);
     }
