@@ -29,7 +29,6 @@ internal class Program
         Console.WriteLine("\n  -- Validate Information --\n");
 
         ValidateData ValidateData = TsarClient.Validate();
-        Console.WriteLine($"  Is Valid: {ValidateData.Valid}");
         Console.WriteLine($"  Hardware Id: {ValidateData.HardwareId}");
         Console.WriteLine($"  TimeStamp: {ValidateData.Timestamp}");
 

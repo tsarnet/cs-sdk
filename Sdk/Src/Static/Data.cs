@@ -27,6 +27,9 @@ public class Subscription
 
     [JsonPropertyName("user")]
     public User User { get; set; }
+
+    [JsonPropertyName("tier")]
+    public int Tier { get; set; }
 }
 
 public class User
@@ -38,14 +41,11 @@ public class User
     public string Username { get; set; }
 
     [JsonPropertyName("avatar")]
-    public object Avatar { get; set; }
+    public string Avatar { get; set; }
 }
 
 public class ValidateData
 {
-    [JsonPropertyName("valid")]
-    public bool Valid { get; set; }
-
     [JsonPropertyName("hwid")]
     public string HardwareId { get; set; }
 

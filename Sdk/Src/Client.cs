@@ -82,12 +82,12 @@ public class Client : IDisposable
     /// <summary> Validates The User With <paramref name="Id"/> Specified. </summary>
     /// <param name="Id"> The User's Hardware Id. </param>
     /// <returns> <see cref="Data"/> Struct Which Contains Information About The User And Subscription. </returns>
-    internal Data ValidateUser(string Id) => this.Query<Data>($"https://tsar.cc/api/client/subscriptions/get?app={this.ApplicationId}&hwid={Id}").Result;
+    internal Data ValidateUser(string Id) => this.Query<Data>($"https://tsar.cc/api/client/initialize?app={this.ApplicationId}&hwid={Id}").Result;
 
     /// <summary> Validates The User With <paramref name="Id"/> Specified. </summary>
     /// <param name="Id"> The User's Hardware Id. </param>
     /// <returns> <see cref="Data"/> Struct Which Contains Information About The User And Subscription. </returns>
-    internal async Task<Data> ValidateUserAsync(string Id) => await this.Query<Data>($"https://tsar.cc/api/client/subscriptions/get?app={this.ApplicationId}&hwid={Id}");
+    internal async Task<Data> ValidateUserAsync(string Id) => await this.Query<Data>($"https://tsar.cc/api/client/initialize?app={this.ApplicationId}&hwid={Id}");
 
     private async Task<T> Query<T>(string Path)
     {
