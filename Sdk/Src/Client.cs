@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Management;
 using System.Net;
 using System.Net.Http;
@@ -7,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using GuerrillaNtp;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509;
@@ -21,13 +24,13 @@ public class Client : IDisposable
     private static HttpClient HttpClient { get; } = new HttpClient { };
 
     /// <summary> The Application Id. </summary>
-    public string ApplicationId { get; }
+    public string ApplicationId { get; internal set; }
 
     /// <summary> The Client's Key. </summary>
-    public string ClientKey { get; }
+    public string ClientKey { get; internal set; }
 
-    /// <summary> The Client's Session. </summary>
-    public string Session { get; }
+    /// <summary> The Client's Debug Mode. </summary>
+    public bool Debug { get; internal set; }
 
     /// <summary> The User's Hardware Id. </summary>
     public string HardwareId
@@ -44,76 +47,122 @@ public class Client : IDisposable
         }
     }
 
-    /// <summary> The User's Subscription. </summary>
-    public Subscription Subscription { get; }
+    /// <summary> The Dashboards Host Name. </summary>
+    public string HostName { get; internal set; }
     #endregion
 
     #region Constructors
     /// <summary> Initializes A New Instance Of The <see cref="Client"/> Class. </summary>
     /// <param name="Options"> The Client Options To Use When Constructing <see cref="Client"/>. </param>
-    public Client(ClientOptions Options)
+    public Client(ClientData Options)
     {
         this.ApplicationId = Options.ApplicationId;
         this.ClientKey = Options.ClientKey;
 
-        Data UserData = this.ValidateUser(this.HardwareId);
+        if (Options.ApplicationId.Length != 36)
+            throw new Exception("Invalid Application Id");
 
-        if (UserData != null)
-        {
-            this.Session = UserData.Session;
-            this.Subscription = UserData.Subscription;
-        }
-        else
-        {
-            Process.Start($"https://tsar.cc/auth/{this.ApplicationId}/{this.HardwareId}").WaitForExit();
-            Environment.Exit(0);
-        }
+        if (Options.ClientKey.Length != 124)
+            throw new Exception("Invalid Client Key");
 
-        if (Options.DebugPrint)
-            Console.WriteLine($"Client Object Created Successfully :\nApplication Id - {this.ApplicationId}\nClient Key - {this.ClientKey}\nSession - {this.Session}\nHardware Id - {this.HardwareId}\n");
+        Init Data = this.ClientCall<Init>("initialize", Options.ClientKey, new() { { "app_id", Options.ApplicationId }, });
+
+        if (Data == null)
+            throw new Exception("Tsar Client - Failed To Initialize Client.");
+
+        this.HostName = Data.HostName;
     }
     #endregion
 
     #region Methods
-    /// <summary> Validates The User. </summary>
-    /// <returns> <see cref="ValidateData"/> Struct Which Contains Information About The Current User Status. </returns>
-    public ValidateData Validate() => this.Query<ValidateData>($"https://tsar.cc/api/client/validate?app={this.ApplicationId}&hwid={this.HardwareId}&session={this.Session}").Result;
+    public void Heartbeat(User UserObject) => this.ClientCall<object>("heartbeat", UserObject.SessionKey, new() { { "session", UserObject.Session } });
+    
+    /// <summary> Authenticates The User. </summary>
+    /// <remarks> This Method Is Synchronous. </remarks>
+    /// <returns> Returns A <see cref="User"/> Object With Contains Info About The Authenticated User. </returns>
+    public User Authenticate(AuthOptions Options) => this.AuthenticateAsync(Options).Result;
 
-    /// <summary> Validates The User With <paramref name="Id"/> Specified. </summary>
-    /// <param name="Id"> The User's Hardware Id. </param>
-    /// <returns> <see cref="Data"/> Struct Which Contains Information About The User And Subscription. </returns>
-    internal Data ValidateUser(string Id) => this.Query<Data>($"https://tsar.cc/api/client/initialize?app={this.ApplicationId}&hwid={Id}").Result;
-
-    /// <summary> Validates The User With <paramref name="Id"/> Specified. </summary>
-    /// <param name="Id"> The User's Hardware Id. </param>
-    /// <returns> <see cref="Data"/> Struct Which Contains Information About The User And Subscription. </returns>
-    internal async Task<Data> ValidateUserAsync(string Id) => await this.Query<Data>($"https://tsar.cc/api/client/initialize?app={this.ApplicationId}&hwid={Id}");
-
-    private async Task<T> Query<T>(string Path)
+    /// <summary> Authenticates The User. </summary>
+    /// <remarks> This Method Is Asynchronous. </remarks>
+    /// <returns> Returns A <see cref="User"/> Object With Contains Info About The Authenticated User. </returns>
+    internal async Task<User> AuthenticateAsync(AuthOptions Options)
     {
-        HttpResponseMessage Output = await HttpClient.GetAsync(Path);
+        User UserData = null;
 
-        if (Output.StatusCode != HttpStatusCode.OK)
-            return default;
+        try
+        {
+            UserData = await this.ClientCallAsync<User>("authenticate", this.ClientKey, new() { { "app_id", this.ApplicationId }, });
+            UserData.OnClientCallRequested += ClientCallAsync<object>;
+        }
+        catch (Exception Exception)
+        {
+            if (Exception.Message == "Tsar Client - Unauthorized")
+                if (Options.OpenBrowser)
+                    Process.Start($"https://{this.HostName}/auth/{this.HardwareId}");
 
-        string JsonText = await Output.Content.ReadAsStringAsync();
+            return null;
+        }
 
-        byte[] DataBytes = Convert.FromBase64String(JsonSerializer.Deserialize<JsonElement>(JsonText).GetProperty("data").ToString());
-        Data DataObject = JsonSerializer.Deserialize<Data>(Encoding.UTF8.GetString(DataBytes));
+        return UserData;
+    }
 
-        if (DataObject.HardwareId != this.HardwareId)
-            throw new Exception("Hardware Id Mismatch.");
+    /// <summary> Queries The Tsar API. </summary>
+    /// <remarks> This Method Is Synchronous. </remarks>
+    /// <returns> Returns The Data Object As <typeparamref name="T"/>. </returns>
+    public T ClientCall<T>(string Path, string PublicKey, Dictionary<string, string> Params) => this.ClientCallAsync<T>(Path, PublicKey, Params).Result;
+
+    /// <summary> Queries The Tsar API. </summary>
+    /// <remarks> This Method Is Asynchronous. </remarks>
+    /// <returns> Returns The Data Object As <typeparamref name="T"/>. </returns>
+    internal async Task<T> ClientCallAsync<T>(string Path, string PublicKey, Dictionary<string, string> Params)
+    {
+        if (!Path.StartsWith("/"))
+            Path = "/" + Path;
+
+        Params.Add("hwid", this.HardwareId);
+
+        string QueryString = string.Join("&", Params.Select(x => $"{x.Key}={x.Value}"));
+        HttpResponseMessage Response = await HttpClient.GetAsync($"https://tsar.cc/api/client{Path}?{QueryString}");
+
+        if (Response.StatusCode != HttpStatusCode.OK)
+            throw new Exception($"Tsar Client - {Response.StatusCode switch
+            {
+                HttpStatusCode.BadRequest => "Bad Request",
+                HttpStatusCode.NotFound => "Not Found",
+                HttpStatusCode.Unauthorized => "Unauthorized",
+                HttpStatusCode.ServiceUnavailable => "Service Unavailable",
+                (HttpStatusCode)429 => "Too Many Requests",
+                _ => "Request Failed"
+            }}");
+
+        string Data = await Response.Content.ReadAsStringAsync();
+        byte[] DataBytes = Convert.FromBase64String(JsonSerializer.Deserialize<JsonElement>(Data).GetProperty("data").ToString());
+
+        Data<T> DataObject = new Data<T>
+        {
+            DataObject = JsonSerializer.Deserialize<DataObject<T>>(Encoding.UTF8.GetString(DataBytes)),
+            Signature = JsonSerializer.Deserialize<JsonElement>(Data).GetProperty("signature").ToString()
+        };
+
+        if (DataBytes == null || DataObject.DataObject == null)
+            throw new Exception("Tsar Client - Failed To Deserialize Data.");
+
+        if (DataObject.DataObject.HardwareId != this.HardwareId)
+            throw new Exception("Tsar Client - Hardware Id Mismatch.");
 
         long SystemTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         NtpClient NtpClient = new NtpClient("time.cloudflare.com");
         long UnixTime = NtpClient.Query().UtcNow.ToUnixTimeSeconds();
 
-        if (DataObject.Timestamp < SystemTime - 30 || Math.Abs(UnixTime - SystemTime) > 30)
-            throw new Exception("Timestamp Invalid.");
+        if (DataObject.DataObject.Timestamp < SystemTime - 30 || Math.Abs(UnixTime - SystemTime) > 30)
+            throw new Exception("Tsar Client - Timestamp Invalid Response Tampered.");
 
-        byte[] PublicKeyBytes = Convert.FromBase64String(this.ClientKey);
-        byte[] SignatureBytes = Convert.FromBase64String(JsonSerializer.Deserialize<JsonElement>(JsonText).GetProperty("signature").ToString());
+        byte[] PublicKeyBytes = Convert.FromBase64String(PublicKey);
+        byte[] SignatureBytes = Convert.FromBase64String(DataObject.Signature);
+
+        if (PublicKeyBytes == null || SignatureBytes == null)
+            throw new Exception("Tsar Client - Failed To Deserialize Public Key Or Signature.");
 
         Asn1Object Object = Asn1Object.FromByteArray(PublicKeyBytes);
         byte[] EncodedPublicKey = Object.GetEncoded();
@@ -136,10 +185,10 @@ public class Client : IDisposable
             Ecdsa.ImportParameters(ecParams);
 
             if (!Ecdsa.VerifyData(DataBytes, SignatureBytes, HashAlgorithmName.SHA256))
-                throw new Exception("Signature Invalid.");
+                throw new Exception("Tsar Client - Signature Invalid.");
         }
 
-        return JsonSerializer.Deserialize<T>(DataBytes);
+        return DataObject.DataObject.Object;
     }
     #endregion
 
@@ -160,9 +209,15 @@ public class Client : IDisposable
     #endregion
 }
 
-public class ClientOptions
+public class AuthOptions
+{
+    public bool OpenBrowser { get; set; } = true;
+}
+
+public class ClientData
 {
     public string ApplicationId { get; set; }
     public string ClientKey { get; set; }
     public bool DebugPrint { get; set; }
+    public string HostName { get; }
 }
