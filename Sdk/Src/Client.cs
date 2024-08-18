@@ -74,18 +74,16 @@ public class Client : IDisposable
     }
     #endregion
 
-    #region Methods
-    public void Heartbeat(User UserObject) => this.ClientCall<object>("heartbeat", UserObject.SessionKey, new() { { "session", UserObject.Session } });
-    
+    #region Methods    
     /// <summary> Authenticates The User. </summary>
     /// <remarks> This Method Is Synchronous. </remarks>
     /// <returns> Returns A <see cref="User"/> Object With Contains Info About The Authenticated User. </returns>
-    public User Authenticate(AuthOptions Options) => this.AuthenticateAsync(Options).Result;
+    public User Authenticate(AuthOptions Options = default) => this.AuthenticateAsync(Options).Result;
 
     /// <summary> Authenticates The User. </summary>
     /// <remarks> This Method Is Asynchronous. </remarks>
     /// <returns> Returns A <see cref="User"/> Object With Contains Info About The Authenticated User. </returns>
-    internal async Task<User> AuthenticateAsync(AuthOptions Options)
+    internal async Task<User> AuthenticateAsync(AuthOptions Options = default)
     {
         User UserData = null;
 
