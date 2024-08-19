@@ -58,6 +58,7 @@ public class Client : IDisposable
     {
         this.ApplicationId = Options.ApplicationId;
         this.ClientKey = Options.ClientKey;
+        this.Debug = Options.DebugPrint;
 
         if (Options.ApplicationId.Length != 36)
             throw new Exception("Invalid Application Id");
@@ -71,6 +72,12 @@ public class Client : IDisposable
             throw new Exception("Tsar Client - Failed To Initialize Client.");
 
         this.HostName = Data.HostName;
+
+        if (Options.DebugPrint)
+            Console.WriteLine($"Tsar Client - Initialized Client With Host Name: {this.HostName}");
+
+        if (OnInitialize != null)
+            OnInitialize?.Invoke(Data);
     }
     #endregion
 
@@ -100,6 +107,9 @@ public class Client : IDisposable
 
             return null;
         }
+
+        if (OnAuthenticate != null)
+            OnAuthenticate?.Invoke(UserData);
 
         return UserData;
     }
@@ -193,6 +203,15 @@ public class Client : IDisposable
     #region Events
     /// <summary> Occurs When The <see cref="Client"/> Instance Is Disposed. </summary>
     public event EventHandler OnDispose;
+
+    /* Not Included Or Unused Possible Addition Later On. */
+    /// <summary> Occurs When The <see cref="Client"/> Instance Is Initialized. </summary>
+    internal delegate void OnInitalizeDelegate(Init Object);
+    internal event OnInitalizeDelegate OnInitialize;
+
+    /// <summary> Occurs When The <see cref="Client"/> Authentication Call Is Successful And Has A Valid <see cref="User"/>. </summary>
+    internal delegate void OnAuthenticateDelegate(User Object);
+    internal event OnAuthenticateDelegate OnAuthenticate;
     #endregion
 
     #region Dispose

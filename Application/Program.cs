@@ -12,7 +12,7 @@ internal class Program
     {
         ApplicationId = "e27cd770-cbb3-425a-b631-8841dbdf1912",
         ClientKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgavgGalH2ip63mElZtLXpR8QypSVNLSxLzV52kZjXyhHo7Swto2wPZbcChYRbUFB72XNG3zzJDHcm/rjakxXmw==",
-        DebugPrint = true
+        DebugPrint = false
     });
 
     public static void Main(string[] args)
