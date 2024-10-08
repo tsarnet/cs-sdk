@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Management;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -49,11 +51,37 @@ public class Client : IDisposable
 
     /// <summary> The Dashboards Host Name. </summary>
     public string HostName { get; internal set; }
+
+    /// <summary> The Binaries Hash. </summary>
+    public string Hash
+    {
+        get
+        {
+            try
+            {
+                string BinaryPath = Process.GetCurrentProcess().MainModule.FileName ?? throw new Exception("Tsar Client - Hash Unauthorized");
+
+                using (FileStream Stream = File.OpenRead(BinaryPath))
+                using (SHA256 Sha256 = SHA256.Create())
+                {
+                    byte[] Buffer = new byte[1024];
+                    int BytesRead;
+
+                    while ((BytesRead = Stream.Read(Buffer, 0, Buffer.Length)) > 0)
+                        Sha256.TransformBlock(Buffer, 0, BytesRead, Buffer, 0);
+
+                    Sha256.TransformFinalBlock(Buffer, 0, 0);
+                    return BitConverter.ToString(Sha256.Hash).Replace("-", "").ToLower();
+                }
+            }
+            catch { throw new Exception("Tsar Client - Hash Unauthorized"); }
+        }
+    }
     #endregion
 
-    #region Constructors
-    /// <summary> Initializes A New Instance Of The <see cref="Client"/> Class. </summary>
-    /// <param name="Options"> The Client Options To Use When Constructing <see cref="Client"/>. </param>
+        #region Constructors
+        /// <summary> Initializes A New Instance Of The <see cref="Client"/> Class. </summary>
+        /// <param name="Options"> The Client Options To Use When Constructing <see cref="Client"/>. </param>
     public Client(ClientData Options)
     {
         this.ApplicationId = Options.ApplicationId;
@@ -101,10 +129,19 @@ public class Client : IDisposable
         }
         catch (Exception Exception)
         {
-            if (Exception.Message == "Tsar Client - Unauthorized")
-                if (Options.OpenBrowser)
-                    Process.Start($"https://{this.HostName}/auth/{this.HardwareId}");
-
+            switch (Exception.Message)
+            {
+                case "Tsar Client - Unauthorized":
+                    if (Options.OpenBrowser)
+                        Process.Start($"https://{this.HostName}/auth/{this.HardwareId}");
+                    break;
+                case "Tsar Client - Hash Unauthorized":
+                    if (Options.OpenBrowser)
+                        Process.Start($"https://{this.HostName}/assets?outdated=true");
+                    break;
+                default:
+                    throw new Exception(Exception.Message);
+            }
             return null;
         }
 
@@ -128,6 +165,7 @@ public class Client : IDisposable
             Path = "/" + Path;
 
         Params.Add("hwid", this.HardwareId);
+        Params.Add("hash", this.Hash);
 
         string QueryString = string.Join("&", Params.Select(x => $"{x.Key}={x.Value}"));
         HttpResponseMessage Response = await HttpClient.GetAsync($"https://tsar.cc/api/client{Path}?{QueryString}");
@@ -138,9 +176,10 @@ public class Client : IDisposable
                 HttpStatusCode.BadRequest => "Bad Request",
                 HttpStatusCode.NotFound => "Not Found",
                 HttpStatusCode.Unauthorized => "Unauthorized",
-                HttpStatusCode.ServiceUnavailable => "Service Unavailable",
+                HttpStatusCode.ServiceUnavailable => "App Paused",
+                HttpStatusCode.Forbidden => "Hash Unauthorized",
                 (HttpStatusCode)429 => "Too Many Requests",
-                _ => "Request Failed"
+                _ => Enum.GetName(typeof(HttpStatusCode), Response.StatusCode)
             }}");
 
         string Data = await Response.Content.ReadAsStringAsync();

@@ -30,7 +30,7 @@ internal class Program
 
         Console.WriteLine("\n -- User Data --");
 
-        User User = TsarClient.Authenticate(default);
+        User User = TsarClient.Authenticate(new AuthOptions { OpenBrowser = true });
         Console.WriteLine($"  User Id: {User.Id}");
         Console.WriteLine($"  User Name: {User.Name}");
         Console.WriteLine($"  User Avatar: {User.Avatar}");
