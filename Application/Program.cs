@@ -27,6 +27,7 @@ internal class Program
         Console.WriteLine($"  Client Key: {TsarClient.ClientKey}");
         Console.WriteLine($"  Hardware Id: {TsarClient.HardwareId}");
         Console.WriteLine($"  Debug Mode: {TsarClient.Debug}");
+        Console.WriteLine($"  Hash : {TsarClient.Hash}");
 
         Console.WriteLine("\n -- User Data --");
 
